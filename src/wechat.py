@@ -63,8 +63,8 @@ class Wechat:
                 )
             key = binascii.b2a_hex(key).decode()
             if self.check_key(key):
-                self.__key_address = key_address
-                self.__key = key
+                self._key_address = key_address
+                self._key = key
 
     @staticmethod
     def check_key(key: str):
@@ -87,7 +87,7 @@ class Wechat:
     def get_key_address_list(self, public_key_list):
         """获取 key 的地址"""
         key_address = []
-        buffer = self.process.read_bytes(self.dll_base, self.image_size)
+        buffer = self.process.read_bytes(self.dll_base_address, self.dll_size)
         byte_length = 4 if self.architecture == 32 else 8
         for public_key_address in public_key_list:
             key_bytes = public_key_address.to_bytes(
@@ -96,60 +96,73 @@ class Wechat:
             offset = self.memory_search(buffer, key_bytes)
             if not offset:
                 continue
-            offset[:] = [x + self.dll_base for x in offset]
+            offset[:] = [x + self.dll_base_address for x in offset]
             key_address += offset
 
         return key_address
 
     @property
     def process(self):
-        if getattr(self, "__process", None) is None:
+        if getattr(self, "_process", None) is None:
             try:
-                self.__process = pymem.Pymem("WeChat.exe")
+                self._process = pymem.Pymem("WeChat.exe")
             except ProcessNotFound:
                 print("微信进程未启动")
                 sys.exit(-1)
             except CouldNotOpenProcess:
                 print("没有权限")
                 sys.exit(-1)
-        return self.__process
+        return self._process
 
     @property
-    def dll_base(self):
-        return pymem.process.module_from_name(
-            self.process.process_handle, "WeChatWin.dll"
-        ).lpBaseOfDll
+    def dll(self):
+        """WeChatWin.dll"""
+        if getattr(self, "_dll", None) is None:
+            self._dll = pymem.process.module_from_name(
+                self.process.process_handle, "WeChatWin.dll"
+            )
+        return self._dll
 
     @property
-    def image_size(self):
-        return pymem.process.module_from_name(
-            self.process.process_handle, "WeChatWin.dll"
-        ).SizeOfImage
+    def dll_base_address(self):
+        """WeChatWin.dll 在内存中的基址"""
+        return self.dll.lpBaseOfDll
+
+    @property
+    def dll_size(self):
+        """WeChatWin.dll 在内存中的空间长度"""
+        return self.dll.SizeOfImage
 
     @property
     def architecture(self):
-        address = self.dll_base + self.process.read_int(self.dll_base + 60) + 4 + 16
-        optinal_header_size = self.process.read_short(address)
-        if optinal_header_size == 0xF0:
+        if getattr(self, "_optinal_header_size", None) is None:
+            address = (
+                self.dll_base_address
+                + self.process.read_int(self.dll_base_address + 60)
+                + 4
+                + 16
+            )
+            self._optinal_header_size = self.process.read_short(address)
+        if self._optinal_header_size == 0xF0:
             return 64
         return 32
 
     @property
     def key(self):
-        if getattr(self, "__key", None) is None:
+        if getattr(self, "_key", None) is None:
             self.crack_key()
-        return self.__key
+        return self._key
 
     @property
     def key_address(self):
-        if getattr(self, "__key_address", None) is None:
+        if getattr(self, "_key_address", None) is None:
             self.crack_key()
-        return self.__key_address
+        return self._key_address
 
     @property
     def version(self):
         """当前运行的微信版本"""
-        if getattr(self, "__version", None) is None:
+        if getattr(self, "_version", None) is None:
             wechat_win_dll_path = next(
                 (
                     m.filename
@@ -164,9 +177,9 @@ class Wechat:
             version_info = GetFileVersionInfo(wechat_win_dll_path, "\\")
             msv = version_info["FileVersionMS"]
             lsv = version_info["FileVersionLS"]
-            self.__version = f"{HIWORD(msv)}.{LOWORD(msv)}.{HIWORD(lsv)}.{LOWORD(lsv)}"
+            self._version = f"{HIWORD(msv)}.{LOWORD(msv)}.{HIWORD(lsv)}.{LOWORD(lsv)}"
 
-        return self.__version
+        return self._version
 
     @property
     def wxid(self):
@@ -189,20 +202,20 @@ class Wechat:
     @property
     def home_path(self):
         """存储微信文件的文件夹路径"""
-        if getattr(self, "__directory_path", None) is None:
+        if getattr(self, "_directory_path", None) is None:
             config = (
                 Path.home()
                 / "AppData/Roaming/Tencent/WeChat/All Users/config/3ebffe94.ini"
             ).read_text(encoding="utf-8")
             if config == "MyDocument:":
-                self.__directory_path = (
+                self._directory_path = (
                     Path.home() / f"Documents/WeChat Files/{self.wxid}"
                 )
             else:
-                self.__directory_path = (
+                self._directory_path = (
                     Path(config) / f"Documents/WeChat Files/{self.wxid}"
                 )
-        return self.__directory_path
+        return self._directory_path
 
     @property
     def chat_db_path(self):
