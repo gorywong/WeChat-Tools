@@ -207,19 +207,15 @@ class Wechat:
     @property
     def chat_db_path(self):
         """存储联系人的数据库路径"""
-        if not self.__decrypted_chat_db_path.exists():
-            self.decrypt_db(self.__chat_db_path)
+        self.decrypt_db(self.__chat_db_path)
         return self.__decrypted_chat_db_path
 
     @property
     def message_db_path(self):
         """存储聊天记录的数据库路径"""
-        if not self.__message_db_path.exists():
-            for path in self.__message_db_path_list:
-                self.decrypt_db(path)
-            merge_sqlite_db(
-                self.__message_db_path, self.__decrypted_message_db_path_list
-            )
+        for path in self.__message_db_path_list:
+            self.decrypt_db(path)
+        merge_sqlite_db(self.__message_db_path, self.__decrypted_message_db_path_list)
         return self.__message_db_path
 
     @property
