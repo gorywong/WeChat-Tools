@@ -20,6 +20,8 @@
 
 ## 快速开始
 在 Release 中下载可执行文件后，在命令行中，切换到可执行文件所在路径下，执行如下命令即可查看使用帮助。
+
+**注意：** 运行时可能会被 Windows Defender 报毒，可以参考[将排除项添加到 Windows 安全中心](https://support.microsoft.com/zh-cn/windows/%E5%B0%86%E6%8E%92%E9%99%A4%E9%A1%B9%E6%B7%BB%E5%8A%A0%E5%88%B0-windows-%E5%AE%89%E5%85%A8%E4%B8%AD%E5%BF%83-811816c0-4dfd-af4a-47e4-c301afe13b26)进行设置。
 ```
 wechat-tools.exe --help
 ```
