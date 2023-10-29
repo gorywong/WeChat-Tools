@@ -38,7 +38,7 @@ python ./src/main.py --help
 
 #### Pip
 ```
-pdm install -r requirements.txt
+python -m pip install -r requirements.txt
 python ./src/main.py --help
 ```
 
