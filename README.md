@@ -67,6 +67,13 @@ python ./src/main.py dump wxid_xxxxxxxxxx --friend 文件专偷助手
 ```
 上述命令会导出你与好友 `文件专偷助手` 的所有聊天记录，这里的 `wxid_xxxxxxxxxx` 是一个必填信息，该信息通常在路径下 `%USERPROFILE%\Documents\WeChat Files` 可以看到作为文件夹名称。
 
+## 常见问题
+### PC 端微信没有聊天记录
+在移动端微信 APP 中，依次进入：`设置 -> 通用 -> 聊天记录迁移与备份 -> 迁移 -> 迁移到电脑`，即可将移动端聊天记录发送至 PC 端。
+
+### PC 端的新的聊天记录没有导出
+PC 端微信运行时产生的聊天记录可能不会及时保存，需要重启微信并登录后再重新使用工具导出。
+
 ## References
 
 1. [x1hy9/WeChatUserDB](https://github.com/x1hy9/WeChatUserDB)
