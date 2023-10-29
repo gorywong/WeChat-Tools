@@ -1,4 +1,3 @@
-import binascii
 import ctypes
 import hmac
 import sqlite3
@@ -61,20 +60,11 @@ class Wechat:
                 key = self.process.read_bytes(
                     self.process.read_longlong(key_address - 0xD8), key_length
                 )
-            key = binascii.b2a_hex(key).decode()
-            if self.check_key(key):
+            if len(key) == 32:
                 self._key_address = key_address
                 self._key = key
 
-    @staticmethod
-    def check_key(key: str):
-        """目前 key 是 64 位字符串"""
-        if key is None or len(key) != 64:
-            return False
-        return True
-
-    @staticmethod
-    def memory_search(parent, child):
+    def memory_search(parent: bytes, child: bytes) -> list[int]:
         offset = []
         index = -1
         while True:
@@ -249,11 +239,9 @@ class Wechat:
         if isinstance(path, str):
             path = Path(path)
 
-        password = bytes.fromhex(self.key)
         blist = path.read_bytes()
-
         salt = blist[:16]  # 前 16 字节为 salt
-        key = pbkdf2_hmac("sha1", password, salt, DEFAULT_ITER, KEY_SIZE)
+        key = pbkdf2_hmac("sha1", self.key, salt, DEFAULT_ITER, KEY_SIZE)
 
         page1 = blist[16:DEFAULT_PAGESIZE]  # 丢掉 salt
 
@@ -265,7 +253,7 @@ class Wechat:
         hash_mac.update(bytes(ctypes.c_int(1)))
 
         if hash_mac.digest() != page1[-32:-12]:
-            raise RuntimeError("解密失败，密码错误: ", password)
+            raise RuntimeError("解密失败，密码错误")
 
         pages = [
             blist[i : i + DEFAULT_PAGESIZE]
